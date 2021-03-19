@@ -1,0 +1,17 @@
+{
+  "name": "nrc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "pkg --targets win index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ewelink-api": "^3.1.1"
+  },
+  "devDependencies": {
+    "pkg": "^4.4.9"
+  }
+}
