@@ -2,6 +2,12 @@
 const kDeviceId = '1000d757b1';
 const kMaxChannel = 4;
 
+const sleep = (ms) => {
+    return new Promise(resolve=>{
+        setTimeout(resolve,ms)
+    })
+}
+
 const readline = require('readline');
 const Ewelink = require('ewelink-api');
 const Zeroconf = require('ewelink-api/src/classes/Zeroconf');
@@ -26,7 +32,10 @@ const printConsoleMenu = async (connection) => {
     console.info(`2) 채널 2 토글 (현재 상태: ${device.params.switches[1].switch})`);
     console.info(`3) 채널 3 토글 (현재 상태: ${device.params.switches[2].switch})`);
     console.info(`4) 채널 4 토글 (현재 상태: ${device.params.switches[3].switch})`);
+    console.info();
 
+    console.info('5) 오디오 켜기')
+    console.info('6) 오디오 끄기')
     console.info('0) 종료')
     console.info();
 }
@@ -54,21 +63,37 @@ let pressEnter = false;
         
         if (pressEnter == false) {
             if (Number.isInteger(channel) && channel >= 0) {
-                if (channel == 0) {
+                if (channel == null) { //입력값 없을때
+                    await printConsoleMenu(connection);
+                    rl.prompt();//메뉴 재출력
+                } else if (channel == 0) {
                     process.exit(0);
-                } else if (channel <= kMaxChannel) {
-                    const toggle = device.params.switches[channel - 1].switch === 'on' ? 'off' : 'on';
-                    await connection.setDevicePowerState(kDeviceId, toggle);
-                    // await connection.toggleDevice(kDeviceId, channel);
+                } else if (channel <= kMaxChannel) { //채널 선택시
+                    const toggle = device.params.switches[channel - 1].switch === 'on' ? 'off' : 'on'; //채널 on off 확인
+                    await connection.setDevicePowerState(kDeviceId, toggle, channel); //조작
+                    await printConsoleMenu(connection);
+                    rl.prompt();
+                } else if (channel == 5) {
+                    await connection.setDevicePowerState(kDeviceId, 'on', '4');
+                    await connection.setDevicePowerState(kDeviceId, 'on', '3');
+                    await sleep(1500); //1.5ms 대기
+                    await connection.setDevicePowerState(kDeviceId, 'on', '2');
+                    await printConsoleMenu(connection);
+                    rl.prompt();
+                } else if (channel == 6) {
+                    await connection.setDevicePowerState(kDeviceId, 'off', '2');
+                    await sleep(1000); //1ms 대기
+                    await connection.setDevicePowerState(kDeviceId, 'off', '3');
+                    await connection.setDevicePowerState(kDeviceId, 'off', '4');
                     await printConsoleMenu(connection);
                     rl.prompt();
                 } else {
                     pressEnter = true;
                     console.info('없는 옵션! Enter키를 눌러주세요');
                 }
-            } else {
+            } else { //그외의 값 입력시
                 await printConsoleMenu(connection);
-                rl.prompt();
+                rl.prompt(); //메뉴 재출력
             }
         } else {
             pressEnter = false;
